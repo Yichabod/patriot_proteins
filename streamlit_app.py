@@ -2,6 +2,7 @@
 # created by Chanin Nantasenamat (Data Professor) https://youtube.com/dataprofessor
 # Credit: This app is inspired by https://huggingface.co/spaces/osanseviero/esmfold
 
+from itertools import dropwhile
 import streamlit as st
 from stmol import showmol
 import py3Dmol
@@ -12,11 +13,27 @@ import biotite.structure.io as bsio
 # st.sidebar.title('🇺🇸 PATRIOT PROTEINS')
 # st.sidebar.image('patriot_img.jpg', caption='Demonstrate your loyalty with Patriot Proteins.')
 
-st.title('🇺🇸 PATRIOT PROTEINS')
-st.title('Turn patriotic text into a protein')
-st.image('patriot_img.jpg', caption='Demonstrate your loyalty with Patriot Proteins.')
-st.write('Pick a text. Each letter maps to an amino acid. Folded with a machine learning model.')
+# st.title('🇺🇸 PATRIOT PROTEINS')
+# st.title('Turn patriotic text into a protein')
+# st.image('patriot_img.jpg', caption='Demonstrate your loyalty with Patriot Proteins.')
+# st.write('Pick a text. Each letter maps to an amino acid. Folded with a machine learning model.')
 
+st.markdown('# 🇺🇸 PATRIOT PROTEINS')
+# st.image('patriot_img.jpg', caption='Demonstrate your loyalty with Patriot Proteins.')
+# st.markdown('### Turn patriotic text into a protein')
+# st.write('Pick a text. Each letter maps to an amino acid. Folded with a machine learning model.')
+
+# Create two columns
+col1, col2 = st.columns(2)
+
+# Use the first column for text
+with col1:
+    st.markdown('*Hold the constitution in your hand as a 3D printed protein*')
+    st.write('Pick your favorite patriotic text. We translate each letter to an amino acid. Using the latest machine learning model, we fold the amino acids into a protein. 3D printed copy available for pre-order now.')
+
+# Use the second column for the image
+with col2:
+    st.image('patriot_img.jpg', caption='God Bless America.', use_column_width=True)
 
 
 # st.sidebar.write("Are you seeking something extraordinary that symbolizes your profound love for America? Look no further than Patriot Proteins. These aren't just 3D printed plastic models of proteins, but cultural touchstones that encode messages from our American heritage, including the Federalist Papers and the Second Amendment. As decor, they ignite discussions about our national values, serving as a testament to our technological advancements and rich history. With Patriot Proteins, history and science combine to celebrate your American spirit in a truly distinctive way.")
@@ -100,15 +117,19 @@ def update(sequence):
     response = requests.post('https://api.esmatlas.com/foldSequence/v1/pdb/', headers=headers, data=sequence)
     name = sequence[:3] + sequence[-3:]
     pdb_string = response.content.decode('utf-8')
+    print(pdb_string.startswith('HEADER'))
+    if not pdb_string.startswith('HEADER'):  # Adjust this based on what a valid PDB string should start with
+        st.error('The API did not return a valid PDB structure. Please try again.')
+        return
 
     with open('predicted.pdb', 'w') as f:
         f.write(pdb_string)
 
     struct = bsio.load_structure('predicted.pdb', extra_fields=["b_factor"])
-    b_value = round(struct.b_factor.mean(), 4)
+    # b_value = round(struct.b_factor.mean(), 4)
 
     # Display protein structure
-    st.subheader('Your Patriot Protein')
+    st.markdown('_Your Patriot Protein_')
     render_mol(pdb_string)
 
     # # plDDT value is stored in the B-factor field
@@ -116,8 +137,6 @@ def update(sequence):
     # st.write('plDDT is a per-residue estimate of the confidence in prediction on a scale from 0-100.')
     # st.info(f'plDDT: {b_value}')
 
-    if st.button("ORDER NOW"):
-        pass
 
     # st.download_button(
     #     label="Download PDB",
@@ -135,22 +154,44 @@ DEFAULT_SEQ = quotations['constitution']
 # txt = st.sidebar.text_area('Input sequence', DEFAULT_SEQ, height=200)
 # amino_acids = word_to_amino(txt)
 
-if st.sidebar.button('CONSTITUTION'):
-    txt = quotations['constitution']
-    st.write(txt)
-    update(word_to_amino(txt))
-elif st.sidebar.button('SECOND AMENDMENT'):
-    txt = quotations['second_amendment']
-    st.write(txt)
-    update(word_to_amino(txt))
-elif st.sidebar.button('FOURTH AMENDMENT'):
-    txt = quotations['fourth_amendment']
-    st.write(txt)
-    update(word_to_amino(txt))
-elif st.sidebar.button('GETTYSBURG ADDRESS'):
-    txt = quotations['gettysburg']
-    st.write(txt)
-    update(word_to_amino(txt))
+dropdown_options = {
+    'CONSTITUTION':'constitution',
+'SECOND AMENDMENT':'second_amendment',
+'FOURTH AMENDMENT':'fourth_amendment',
+'GETTYSBURG ADDRESS':'gettysburg',
+}
+
+option_selected = st.selectbox("CHOOSE YOUR TEXT", options=list(dropdown_options.keys()))
+
+if option_selected:
+    text_name = dropdown_options[option_selected]
+    text = quotations[text_name]
+    amino_acids = word_to_amino(text)
+    col1, col2 = st.columns(2)
+    
+    # Display text in the first column and amino sequence in the second
+    col1.markdown(f"**Text:** {text}")
+    col2.markdown(f"**Amino Sequence:** {amino_acids}")
+    update(amino_acids)
+else:
+    option_selected = st.selectbox("CHOOSE YOUR TEXT", options=list(dropdown_options.keys()))
+
+
+col1, col2 = st.columns(2)
+
+# Add a button to the first column and another button to the second column
+if col1.button('FIND OUT MORE'):
+    # Handle 'Find out more' click here
+    st.write('You clicked Find out more')
+
+if col2.button('PRE-ORDER NOW'):
+    # Handle 'Pre-order now' click here
+    st.write('You clicked Pre-order now')
+
+# elif st.button('GETTYSBURG ADDRESS'):
+#     txt = quotations['gettysburg']
+#     st.write(txt)
+#     update(word_to_amino(txt))
 
 # add_selectbox = st.sidebar.selectbox(
 #     "How would you like to be contacted?",
@@ -163,10 +204,10 @@ elif st.sidebar.button('GETTYSBURG ADDRESS'):
 
 
 
-if st.sidebar.button('PATRIOTIZE'):
-    update()
-else:
-    st.warning('👈 Choose a Patriot Protein here 🇺🇸')
+# if st.sidebar.button('PATRIOTIZE'):
+#     update()
+# else:
+#     st.warning('👈 Choose a Patriot Protein here 🇺🇸')
 # predict = st.sidebar.button('PATRIOTIZE', on_click=update)
 
 
