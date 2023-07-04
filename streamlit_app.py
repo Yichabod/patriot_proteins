@@ -9,6 +9,7 @@ import py3Dmol
 import requests
 import biotite.structure.io as bsio
 
+st.set_page_config(page_title="Patriot Protein", page_icon="🇺🇸")
 # st.set_page_config(layout = 'wide')
 
 AUDIO_FILE = "give_it_to_me.mp3"
@@ -180,12 +181,15 @@ def update(sequence):
 
     struct = bsio.load_structure('predicted.pdb', extra_fields=["b_factor"])
     # b_value = round(struct.b_factor.mean(), 4)
+    # st.markdown('_Your Patriot Protein_')
+    # render_mol(pdb_string)
 
-
-    if st.checkbox("Show / Hide 3D model"):
+    if not st.checkbox("Show / Hide Protein"):
         # Display protein structure
         st.markdown('_Your Patriot Protein_')
         render_mol(pdb_string)
+
+        
 
     # # plDDT value is stored in the B-factor field
     # st.subheader('plDDT')
